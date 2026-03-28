@@ -115,8 +115,7 @@ export const CreateGame = ({ onCreateGame, onBack }: CreateGameProps) => {
             return;
           }
         }
-
-        // Map imported questions into form state
+ 
         const formQuestions: QuestionForm[] = imported.map((q) => ({
           text: q.text,
           option1: q.options[0],

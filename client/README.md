@@ -11,8 +11,8 @@ A React frontend for the real-time multiplayer quiz game. This client is fully i
 
 ```bash
 npm install
-npm run dev     # development with hot reload (http://localhost:5173)
-npm run build   # production build
+npm run dev    
+npm run build 
 ```
 
 ## Screens

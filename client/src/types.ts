@@ -1,13 +1,13 @@
 export interface Question {
   text: string;
-  options: string[];       // exactly 4 options
-  correctIndex: number;    // index of the correct option (0-3)
-  timeLimitSec: number;    // time limit for the question in seconds
+  options: string[];      
+  correctIndex: number;    
+  timeLimitSec: number;    
 }
 
 export interface Player {
   name: string;
-  index: number | string;  // unique player id
+  index: number | string;   
   score: number;
 }
 
@@ -18,15 +18,13 @@ export interface PlayerResult {
   pointsEarned: number;
   totalScore: number;
 }
-
-// WebSocket Message Types
+ 
 export interface WSMessage {
   type: string;
   data: any;
   id: number;
 }
-
-// --- Request types (client → server) ---
+ 
 
 export interface RegRequest {
   name: string;
@@ -50,8 +48,7 @@ export interface AnswerRequest {
   questionIndex: number;
   answerIndex: number;
 }
-
-// --- Response types (server → client) ---
+ 
 
 export interface RegResponse {
   name: string;
@@ -75,7 +72,7 @@ export interface PlayerJoinedMessage {
 }
 
 export interface UpdatePlayersMessage {
-  // data is the array itself: Player[]
+  
 }
 
 export interface QuestionMessage {

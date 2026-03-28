@@ -38,14 +38,12 @@ function App() {
   const [gameCode, setGameCode] = useState('');
   const [players, setPlayers] = useState<Player[]>([]);
   const [error, setError] = useState('');
-
-  // Game state
+ 
   const [currentQuestion, setCurrentQuestion] = useState<QuestionMessage | null>(null);
   const [questionResult, setQuestionResult] = useState<QuestionResultMessage | null>(null);
   const [finalResults, setFinalResults] = useState<GameFinishedMessage | null>(null);
   const [hasAnswered, setHasAnswered] = useState(false);
-
-  // Handle WebSocket messages
+ 
   useEffect(() => {
     if (!lastMessage) return;
 
@@ -78,16 +76,16 @@ function App() {
         break;
 
       case 'player_joined':
-        // { playerName, playerCount } — informational broadcast
+        
         break;
 
       case 'update_players':
-        // data is Player[] directly
+    
         setPlayers(Array.isArray(data) ? data : []);
         break;
 
       case 'answer_accepted':
-        // confirmation from server — we already set hasAnswered optimistically
+  
         break;
 
       case 'question':
@@ -116,7 +114,7 @@ function App() {
     }
   }, [lastMessage]);
 
-  // Handlers
+ 
   const handleLogin = (name: string, password: string) => {
     setPlayerName(name);
     sendMessage('reg', { name, password });
@@ -170,7 +168,7 @@ function App() {
     setError('');
   };
 
-  // Connection status
+ 
   if (!isConnected) {
     return (
       <div style={styles.loading}>
@@ -178,9 +176,7 @@ function App() {
         <p>Please make sure the WebSocket server is running on {WS_URL}</p>
       </div>
     );
-  }
-
-  // Error display
+  } 
   const errorDisplay = error && (
     <div style={styles.error}>
       <p>{error}</p>
@@ -189,8 +185,7 @@ function App() {
       </button>
     </div>
   );
-
-  // Render current screen
+ 
   return (
     <>
       {errorDisplay}

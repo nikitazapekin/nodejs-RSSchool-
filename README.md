@@ -9,7 +9,7 @@
 ## Project structure
 
 ```
-├── client/          # Frontend (React + Vite) — fully working, do not modify
+├── client/          # Frontend (React + Vite) — fully working, do not modify this
 ├── server/          # Backend (Node.js + ws) — YOUR implementation goes here
 │   ├── src/
 │   │   ├── index.ts   # Server entry point (starter code provided)
@@ -70,7 +70,7 @@ Refer to the full assignment specification for detailed data structures and the 
 4. In one tab — register and create a game (host)
 5. In the other tab — register and join the game using the room code
 6. Host starts the game, player answers questions
-7. Verify scores, results, and final scoreboard
+7. Verify scores, results, and final scoreboard 
 
 ## Build for production
 

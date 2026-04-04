@@ -12,7 +12,7 @@ export class ListQueryDto {
   @Min(1)
   page?: number;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: 100, description: 'Page size for paginated responses' })
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, description: 'Page size for paginated response' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

@@ -1,6 +1,8 @@
 import { ArticleStatus, PrismaClient, UserRole } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import { createPrismaClientOptions } from '../src/database/prisma-client-options';
+
+const prisma = new PrismaClient(createPrismaClientOptions());
 
 async function main(): Promise<void> {
   await prisma.$transaction([

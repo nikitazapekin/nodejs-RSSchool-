@@ -18,7 +18,7 @@ Create a local `.env` from `.env.example` before running the app.
 
 ## Run
 
-The service uses `.env` and listens on port `4000` by default.
+The service uses `.env` and listens on port `4002` by default.
 
 ```bash
 npm start
@@ -27,7 +27,7 @@ npm start
 Swagger UI is available at:
 
 ```text
-http://localhost:4000/doc
+http://localhost:4002/doc
 ```
 
 ## Available Scripts
@@ -51,13 +51,15 @@ Start the full stack with PostgreSQL:
 
 ```bash
 cp .env.example .env
-docker compose up --build
+./compose-up.sh
 ```
+
+`compose-up.sh` wraps `docker compose up --build` and removes any stale `rs-db-1` container/orphans before starting the stack so the legacy `docker-compose` client does not crash on Docker releases that stopped providing the `ContainerConfig` metadata field.
 
 The Compose stack includes:
 
 - `db` on port `5432`
-- `app` on port `4000`
+- `app` on port `4002`
 - optional `adminer` on port `8080` via `docker compose --profile debug up --build`
 
 The application and PostgreSQL communicate over the custom `knowledge_hub_network` network, and PostgreSQL data is stored in the named `postgres_data` volume.

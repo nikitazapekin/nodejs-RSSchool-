@@ -61,7 +61,9 @@ CREATE TABLE "Tag" (
 -- CreateTable
 CREATE TABLE "_ArticleToTag" (
     "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_ArticleToTag_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
@@ -84,9 +86,6 @@ CREATE UNIQUE INDEX "Tag_name_key" ON "Tag"("name");
 
 -- CreateIndex
 CREATE INDEX "Tag_name_idx" ON "Tag"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "_ArticleToTag_AB_unique" ON "_ArticleToTag"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_ArticleToTag_B_index" ON "_ArticleToTag"("B");

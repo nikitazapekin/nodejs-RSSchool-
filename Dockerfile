@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm ci --ignore-scripts
 
 COPY nest-cli.json tsconfig*.json ./
+COPY .env.production .env
 COPY src ./src
 COPY prisma ./prisma
 COPY prisma.config.ts ./prisma.config.ts
@@ -19,7 +20,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package*.json ./
+COPY .env.production .env
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 

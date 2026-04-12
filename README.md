@@ -1,3 +1,8 @@
+## Docker Hub
+
+https://hub.docker.com/layers/nikitazapekin/rs-app/latest/images/sha256:9990acb6dad5948ac8f6ca6501b3b74c7d75d4474884004b233c6ef5cc9761bd?uuid=5b61909a-eb8d-4ccd-afb0-a8bf5e576f94
+
+
 # Knowledge Hub API
 
 REST API for a Knowledge Hub platform built with Nest.js and TypeScript.
@@ -225,4 +230,4 @@ Without pagination params, list endpoints return a plain array.
 
 ## Docker Hub
 
-Add your pushed image URL here after publishing the application image to Docker Hub.
+https://hub.docker.com/layers/nikitazapekin/rs-app/latest/images/sha256:9990acb6dad5948ac8f6ca6501b3b74c7d75d4474884004b233c6ef5cc9761bd?uuid=5b61909a-eb8d-4ccd-afb0-a8bf5e576f94

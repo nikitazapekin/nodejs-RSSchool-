@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  admin
+  editor
+  viewer
+}
+
+enum ArticleStatus {
+  draft
+  published
+  archived
+}
+
+model User {
+  id        String    @id @default(uuid())
+  login     String
+  password  String
+  role      UserRole  @default(viewer)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  articles  Article[] @relation("UserArticles")
+  comments  Comment[] @relation("UserComments")
+}
+
+model Article {
+  id         String        @id @default(uuid())
+  title      String
+  content    String
+  status     ArticleStatus @default(draft)
+  authorId   String?
+  categoryId String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @default(now()) @updatedAt
+  author     User?         @relation("UserArticles", fields: [authorId], references: [id], onDelete: SetNull)
+  category   Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  comments   Comment[]
+  tags       Tag[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([authorId])
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  articles    Article[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  articleId String
+  authorId  String?
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author    User?    @relation("UserComments", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@index([authorId])
+}
+
+model Tag {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  articles Article[]
+
+  @@index([name])
+}

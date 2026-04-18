@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { compare, hash } from 'bcryptjs';
 
 import { UserRole as PrismaUserRole } from '@prisma/client';
 import { ListQueryDto } from '../common/dto/list-query.dto';
@@ -51,10 +53,19 @@ export class UserService {
   }
 
   async create(dto: CreateUserDto): Promise<PublicUser> {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { login: dto.login },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Login is already taken');
+    }
+
     const user = await this.prisma.user.create({
       data: {
         login: dto.login,
-        password: dto.password,
+        password: await hash(dto.password, 10),
         role: (dto.role ?? UserRole.VIEWER) as PrismaUserRole,
       },
     });
@@ -65,14 +76,16 @@ export class UserService {
   async updatePassword(id: string, dto: UpdatePasswordDto): Promise<PublicUser> {
     const user = await this.findRecordById(id);
 
-    if (user.password !== dto.oldPassword) {
+    const passwordMatches = await compare(dto.oldPassword, user.password);
+
+    if (!passwordMatches) {
       throw new ForbiddenException('Old password is incorrect');
     }
 
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
-        password: dto.newPassword,
+        password: await hash(dto.newPassword, 10),
       },
     });
 

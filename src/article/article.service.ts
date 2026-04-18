@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -10,11 +11,13 @@ import {
 } from '@prisma/client';
 import { ArticleStatus } from '../common/enums/article-status.enum';
 import { Article } from '../common/interfaces/article.interface';
+import { UserRole } from '../common/enums/user-role.enum';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { ArticleModel } from '../common/models/article.model';
 import { paginateItems, sortItems } from '../common/utils/list-response.util';
 import { PrismaService } from '../database/prisma.service';
 import { toArticleRecord } from '../database/mappers';
+import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { ArticleListQueryDto } from './dto/article-list-query.dto';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -74,19 +77,20 @@ export class ArticleService {
     return this.findRecordById(id);
   }
 
-  async create(dto: CreateArticleDto): Promise<Article> {
-    await this.ensureArticleRelations(dto.authorId, dto.categoryId);
+  async create(dto: CreateArticleDto, currentUser?: AuthUser): Promise<Article> {
+    const authorId = this.resolveAuthorId(dto.authorId, currentUser);
+    await this.ensureArticleRelations(authorId, dto.categoryId);
 
     const article = await this.prisma.article.create({
       data: {
         title: dto.title,
         content: dto.content,
         status: (dto.status ?? ArticleStatus.DRAFT) as PrismaArticleStatus,
-        ...(dto.authorId
+        ...(authorId
           ? {
               author: {
                 connect: {
-                  id: dto.authorId,
+                  id: authorId,
                 },
               },
             }
@@ -123,9 +127,12 @@ export class ArticleService {
     return toArticleRecord(article);
   }
 
-  async update(id: string, dto: UpdateArticleDto): Promise<Article> {
-    await this.findRecordById(id);
-    await this.ensureArticleRelations(dto.authorId, dto.categoryId);
+  async update(id: string, dto: UpdateArticleDto, currentUser?: AuthUser): Promise<Article> {
+    const existingArticle = await this.findRecordById(id);
+    this.ensureCanManageArticle(existingArticle, currentUser);
+
+    const authorId = this.resolveAuthorId(dto.authorId, currentUser, existingArticle.authorId);
+    await this.ensureArticleRelations(authorId, dto.categoryId);
 
     const data: Prisma.ArticleUpdateInput = {
       ...(dto.title !== undefined ? { title: dto.title } : {}),
@@ -133,12 +140,12 @@ export class ArticleService {
       ...(dto.status !== undefined
         ? { status: dto.status as PrismaArticleStatus }
         : {}),
-      ...(dto.authorId !== undefined
+      ...(dto.authorId !== undefined || currentUser?.role === UserRole.EDITOR
         ? {
-            author: dto.authorId
+            author: authorId
               ? {
                   connect: {
-                    id: dto.authorId,
+                    id: authorId,
                   },
                 }
               : {
@@ -190,7 +197,10 @@ export class ArticleService {
     return toArticleRecord(article);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, currentUser?: AuthUser): Promise<void> {
+    const existingArticle = await this.findRecordById(id);
+    this.ensureCanManageArticle(existingArticle, currentUser);
+
     await this.prisma.$transaction(async (tx) => {
       const article = await tx.article.findUnique({
         where: { id },
@@ -254,6 +264,47 @@ export class ArticleService {
           `Category with id "${categoryId}" does not exist`,
         );
       }
+    }
+  }
+
+  private resolveAuthorId(
+    requestedAuthorId: string | null | undefined,
+    currentUser?: AuthUser,
+    fallbackAuthorId?: string | null,
+  ): string | null | undefined {
+    if (!currentUser) {
+      return requestedAuthorId;
+    }
+
+    if (currentUser.role === UserRole.ADMIN) {
+      return requestedAuthorId ?? fallbackAuthorId;
+    }
+
+    if (currentUser.role === UserRole.EDITOR) {
+      if (
+        requestedAuthorId !== undefined &&
+        requestedAuthorId !== null &&
+        requestedAuthorId !== currentUser.userId
+      ) {
+        throw new ForbiddenException('Editors can manage only their own articles');
+      }
+
+      return currentUser.userId;
+    }
+
+    return requestedAuthorId ?? fallbackAuthorId;
+  }
+
+  private ensureCanManageArticle(
+    article: Article,
+    currentUser?: AuthUser,
+  ): void {
+    if (!currentUser || currentUser.role === UserRole.ADMIN) {
+      return;
+    }
+
+    if (currentUser.role !== UserRole.EDITOR || article.authorId !== currentUser.userId) {
+      throw new ForbiddenException('You are not allowed to manage this article');
     }
   }
 }

@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { hash } from 'bcryptjs';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 import { SortOrder } from '../src/common/enums/sort-order.enum';
@@ -59,11 +60,12 @@ describe('UserService', () => {
 
   it('updates password when old password matches', async () => {
     const { service, prisma } = createUserService();
+    const oldPasswordHash = await hash('old-pass', 10);
 
     prisma.user.findUnique = async () => ({
       id: USER_ID,
       login: 'user01',
-      password: 'old-pass',
+      password: oldPasswordHash,
       role: UserRole.VIEWER,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -80,11 +82,12 @@ describe('UserService', () => {
 
   it('throws ForbiddenException when old password is incorrect', async () => {
     const { service, prisma } = createUserService();
+    const oldPasswordHash = await hash('old-pass', 10);
 
     prisma.user.findUnique = async () => ({
       id: USER_ID,
       login: 'user01',
-      password: 'old-pass',
+      password: oldPasswordHash,
       role: UserRole.VIEWER,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       updatedAt: new Date('2026-01-01T00:00:00.000Z'),

@@ -19,14 +19,15 @@ enum ArticleStatus {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  login     String
-  password  String
-  role      UserRole  @default(viewer)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
-  articles  Article[] @relation("UserArticles")
-  comments  Comment[] @relation("UserComments")
+  id               String    @id @default(uuid())
+  login            String    @unique
+  password         String
+  refreshTokenHash String?
+  role             UserRole  @default(viewer)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  articles         Article[] @relation("UserArticles")
+  comments         Comment[] @relation("UserComments")
 }
 
 model Article {

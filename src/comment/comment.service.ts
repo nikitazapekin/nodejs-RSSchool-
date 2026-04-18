@@ -1,9 +1,12 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 
+import { AuthUser } from '../auth/interfaces/auth-user.interface';
+import { UserRole } from '../common/enums/user-role.enum';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { Comment } from '../common/interfaces/comment.interface';
 import { CommentModel } from '../common/models/comment.model';
@@ -42,7 +45,7 @@ export class CommentService {
     });
   }
 
-  async create(dto: CreateCommentDto): Promise<Comment> {
+  async create(dto: CreateCommentDto, currentUser?: AuthUser): Promise<Comment> {
     const article = await this.prisma.article.findUnique({
       where: {
         id: dto.articleId,
@@ -58,15 +61,17 @@ export class CommentService {
       );
     }
 
-    if (dto.authorId) {
+    const authorId = this.resolveAuthorId(dto.authorId, currentUser);
+
+    if (authorId) {
       const author = await this.prisma.user.findUnique({
-        where: { id: dto.authorId },
+        where: { id: authorId },
         select: { id: true },
       });
 
       if (!author) {
         throw new UnprocessableEntityException(
-          `User with id "${dto.authorId}" does not exist`,
+          `User with id "${authorId}" does not exist`,
         );
       }
     }
@@ -75,25 +80,63 @@ export class CommentService {
       data: {
         content: dto.content,
         articleId: dto.articleId,
-        authorId: dto.authorId ?? null,
+        authorId: authorId ?? null,
       },
     });
 
     return toCommentRecord(comment);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, currentUser?: AuthUser): Promise<void> {
     const comment = await this.prisma.comment.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, authorId: true },
     });
 
     if (!comment) {
       throw new NotFoundException(`Comment with id "${id}" not found`);
     }
 
+    this.ensureCanManageComment(comment.authorId, currentUser);
+
     await this.prisma.comment.delete({
       where: { id },
     });
+  }
+
+  private resolveAuthorId(
+    requestedAuthorId: string | null | undefined,
+    currentUser?: AuthUser,
+  ): string | null | undefined {
+    if (!currentUser) {
+      return requestedAuthorId;
+    }
+
+    if (currentUser.role === UserRole.ADMIN) {
+      return requestedAuthorId;
+    }
+
+    if (
+      requestedAuthorId !== undefined &&
+      requestedAuthorId !== null &&
+      requestedAuthorId !== currentUser.userId
+    ) {
+      throw new ForbiddenException('Editors can create only their own comments');
+    }
+
+    return currentUser.userId;
+  }
+
+  private ensureCanManageComment(
+    authorId: string | null,
+    currentUser?: AuthUser,
+  ): void {
+    if (!currentUser || currentUser.role === UserRole.ADMIN) {
+      return;
+    }
+
+    if (currentUser.role !== UserRole.EDITOR || authorId !== currentUser.userId) {
+      throw new ForbiddenException('You are not allowed to manage this comment');
+    }
   }
 }

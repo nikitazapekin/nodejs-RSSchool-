@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   Param,
@@ -17,6 +18,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthUser } from '../auth/interfaces/auth-user.interface';
+import { UserRole } from '../common/enums/user-role.enum';
 import { ListQueryDto } from '../common/dto/list-query.dto';
 import { CategoryModel } from '../common/models/category.model';
 import { CategoryService } from './category.service';
@@ -42,23 +46,36 @@ export class CategoryController {
 
   @Post()
   @ApiCreatedResponse({ type: CategoryModel })
-  create(@Body() dto: CreateCategoryDto) {
+  create(@CurrentUser() currentUser: AuthUser, @Body() dto: CreateCategoryDto) {
+    this.ensureAdmin(currentUser);
     return this.categoryService.create(dto);
   }
 
   @Put(':id')
   @ApiOkResponse({ type: CategoryModel })
   update(
+    @CurrentUser() currentUser: AuthUser,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateCategoryDto,
   ) {
+    this.ensureAdmin(currentUser);
     return this.categoryService.update(id, dto);
   }
 
   @Delete(':id')
   @HttpCode(204)
   @ApiNoContentResponse()
-  async delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): Promise<void> {
+  async delete(
+    @CurrentUser() currentUser: AuthUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<void> {
+    this.ensureAdmin(currentUser);
     await this.categoryService.delete(id);
+  }
+
+  private ensureAdmin(user: AuthUser): void {
+    if (user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin role is required');
+    }
   }
 }

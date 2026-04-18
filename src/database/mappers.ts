@@ -21,6 +21,7 @@ export function toUserRecord(user: User): UserRecord {
     id: user.id,
     login: user.login,
     password: user.password,
+    refreshTokenHash: user.refreshTokenHash,
     role: user.role as UserRole,
     createdAt: user.createdAt.getTime(),
     updatedAt: user.updatedAt.getTime(),

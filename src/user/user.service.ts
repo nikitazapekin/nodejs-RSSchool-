@@ -17,6 +17,7 @@ import { toUserRecord } from '../database/mappers';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UserRole } from '../common/enums/user-role.enum';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 
 @Injectable()
 export class UserService {
@@ -86,6 +87,19 @@ export class UserService {
       where: { id },
       data: {
         password: await hash(dto.newPassword, 10),
+      },
+    });
+
+    return toPublicUser(toUserRecord(updatedUser));
+  }
+
+  async updateRole(id: string, dto: UpdateUserRoleDto): Promise<PublicUser> {
+    await this.findRecordById(id);
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        role: dto.role as PrismaUserRole,
       },
     });
 

@@ -25,6 +25,7 @@ import { ListQueryDto } from '../common/dto/list-query.dto';
 import { PublicUser } from '../common/models/public-user.model';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UserService } from './user.service';
 
 @ApiTags('user')
@@ -65,6 +66,17 @@ export class UserController {
   ): Promise<PublicUser> {
     this.ensureAdmin(currentUser);
     return this.userService.updatePassword(id, dto);
+  }
+
+  @Put(':id/role')
+  @ApiOkResponse({ type: PublicUser })
+  updateRole(
+    @CurrentUser() currentUser: AuthUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() dto: UpdateUserRoleDto,
+  ): Promise<PublicUser> {
+    this.ensureAdmin(currentUser);
+    return this.userService.updateRole(id, dto);
   }
 
   @Delete(':id')

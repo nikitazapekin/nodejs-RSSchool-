@@ -7,6 +7,7 @@ import { ArticleModule } from './article/article.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { CategoryModule } from './category/category.module';
+import { AppLogger } from './common/logger/app-logger.service';
 import { StripPasswordInterceptor } from './common/interceptors/strip-password.interceptor';
 import { AuthRateLimitMiddleware } from './common/middleware/auth-rate-limit.middleware';
 import { CommentModule } from './comment/comment.module';
@@ -19,6 +20,7 @@ import { UserModule } from './user/user.module';
     ConfigModule.forRoot({
       isGlobal: true,
       expandVariables: true,
+      envFilePath: ['.env', '.env.production'],
     }),
     DatabaseModule,
     AuthModule,
@@ -29,6 +31,7 @@ import { UserModule } from './user/user.module';
   ],
   controllers: [AppController],
   providers: [
+    AppLogger,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

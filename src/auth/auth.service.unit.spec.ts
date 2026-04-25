@@ -237,13 +237,13 @@ describe('AuthService', () => {
   it('checks RBAC permissions by role list', () => {
     expect(
       service.hasRequiredRole(
-        { userId: USER_ID, login: 'admin01', role: UserRole.ADMIN },
+        { role: UserRole.ADMIN },
         [UserRole.ADMIN, UserRole.EDITOR],
       ),
     ).toBe(true);
     expect(
       service.hasRequiredRole(
-        { userId: USER_ID, login: 'viewer01', role: UserRole.VIEWER },
+        { role: UserRole.VIEWER },
         [UserRole.ADMIN],
       ),
     ).toBe(false);

@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  ForbiddenException,
-  Get,
-  HttpCode,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -19,6 +9,7 @@ import {
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
+import { ForbiddenError } from '../common/errors/forbidden.error';
 import { CommentModel } from '../common/models/comment.model';
 import { UuidValidationPipe } from '../common/pipes/uuid-validation.pipe';
 import { CommentService } from './comment.service';
@@ -40,7 +31,7 @@ export class CommentController {
   @ApiCreatedResponse({ type: CommentModel })
   create(@CurrentUser() currentUser: AuthUser, @Body() dto: CreateCommentDto) {
     if (currentUser.role === UserRole.VIEWER) {
-      throw new ForbiddenException('Viewer role has read-only access');
+      throw new ForbiddenError('Viewer role has read-only access');
     }
 
     return this.commentService.create(dto, currentUser);
@@ -54,7 +45,7 @@ export class CommentController {
     @Param('id', UuidValidationPipe) id: string,
   ): Promise<void> {
     if (currentUser.role === UserRole.VIEWER) {
-      throw new ForbiddenException('Viewer role has read-only access');
+      throw new ForbiddenError('Viewer role has read-only access');
     }
 
     await this.commentService.delete(id, currentUser);

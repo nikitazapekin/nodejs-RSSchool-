@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  ForbiddenException,
-  Get,
-  HttpCode,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -20,6 +9,7 @@ import {
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
+import { ForbiddenError } from '../common/errors/forbidden.error';
 import { ArticleModel } from '../common/models/article.model';
 import { UuidValidationPipe } from '../common/pipes/uuid-validation.pipe';
 import { ArticleListQueryDto } from './dto/article-list-query.dto';
@@ -48,7 +38,7 @@ export class ArticleController {
   @ApiCreatedResponse({ type: ArticleModel })
   create(@CurrentUser() currentUser: AuthUser, @Body() dto: CreateArticleDto) {
     if (currentUser.role === UserRole.VIEWER) {
-      throw new ForbiddenException('Viewer role has read-only access');
+      throw new ForbiddenError('Viewer role has read-only access');
     }
 
     return this.articleService.create(dto, currentUser);
@@ -62,7 +52,7 @@ export class ArticleController {
     @Body() dto: UpdateArticleDto,
   ) {
     if (currentUser.role === UserRole.VIEWER) {
-      throw new ForbiddenException('Viewer role has read-only access');
+      throw new ForbiddenError('Viewer role has read-only access');
     }
 
     return this.articleService.update(id, dto, currentUser);
@@ -76,7 +66,7 @@ export class ArticleController {
     @Param('id', UuidValidationPipe) id: string,
   ): Promise<void> {
     if (currentUser.role === UserRole.VIEWER) {
-      throw new ForbiddenException('Viewer role has read-only access');
+      throw new ForbiddenError('Viewer role has read-only access');
     }
 
     await this.articleService.delete(id, currentUser);

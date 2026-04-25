@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   Param,
@@ -21,6 +20,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
 import { ListQueryDto } from '../common/dto/list-query.dto';
+import { ForbiddenError } from '../common/errors/forbidden.error';
 import { CategoryModel } from '../common/models/category.model';
 import { UuidValidationPipe } from '../common/pipes/uuid-validation.pipe';
 import { CategoryService } from './category.service';
@@ -75,7 +75,7 @@ export class CategoryController {
 
   private ensureAdmin(user: AuthUser): void {
     if (user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Admin role is required');
+      throw new ForbiddenError('Admin role is required');
     }
   }
 }

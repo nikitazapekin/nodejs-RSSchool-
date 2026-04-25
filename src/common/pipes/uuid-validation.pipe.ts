@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 
 @Injectable()
-export class UuidValidationPipe implements PipeTransform<string, string> {
+export class UuidValidationPipe implements PipeTransform<string, Promise<string>> {
   private readonly pipe = new ParseUUIDPipe({ version: '4' });
 
   async transform(value: string, metadata: ArgumentMetadata): Promise<string> {

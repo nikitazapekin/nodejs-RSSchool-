@@ -17,7 +17,6 @@ export default defineConfig({
         'src/auth/interfaces/**',
         'src/common/types/**',
         'src/common/interfaces/**',
-        'src/common/middleware/**',
         'src/common/models/**',
         'src/auth/decorators/current-user.decorator.ts',
         'src/database/prisma-client-options.ts',

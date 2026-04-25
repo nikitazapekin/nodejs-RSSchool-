@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   Param,
@@ -21,6 +20,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
 import { ListQueryDto } from '../common/dto/list-query.dto';
+import { ForbiddenError } from '../common/errors/forbidden.error';
 import { PublicUser } from '../common/models/public-user.model';
 import { UuidValidationPipe } from '../common/pipes/uuid-validation.pipe';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -92,7 +92,7 @@ export class UserController {
 
   private ensureAdmin(user: AuthUser): void {
     if (user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException('Admin role is required');
+      throw new ForbiddenError('Admin role is required');
     }
   }
 }

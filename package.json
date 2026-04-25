@@ -18,12 +18,9 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
     "prisma:studio": "prisma studio",
-    "test": "node --require ts-node/register --test tests/**/*.spec.ts",
-    "test:auth": "node --require ts-node/register --test tests/auth.service.spec.ts",
-    "test:refresh": "node --require ts-node/register --test tests/refresh.spec.ts",
-    "test:rbac": "node --require ts-node/register --test tests/rbac.spec.ts",
-    "test:coverage": "c8 --include='src/**/*.ts' --exclude='src/main.ts' --exclude='src/**/*.module.ts' --exclude='src/common/models/*.ts' --exclude='src/common/dto/*.ts' --exclude='src/common/interfaces/*.ts' node --require ts-node/register --test tests/**/*.spec.ts",
-    "test:coverage:html": "c8 --reporter=html --include='src/**/*.ts' --exclude='src/main.ts' --exclude='src/**/*.module.ts' --exclude='src/common/models/*.ts' --exclude='src/common/dto/*.ts' --exclude='src/common/interfaces/*.ts' node --require ts-node/register --test tests/**/*.spec.ts"
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
@@ -52,6 +49,7 @@
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "c8": "^11.0.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.1.2",
@@ -59,6 +57,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.0.0"
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.2.4"
   }
 }

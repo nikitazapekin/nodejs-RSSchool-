@@ -6,7 +6,6 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -23,6 +22,7 @@ import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
 import { ListQueryDto } from '../common/dto/list-query.dto';
 import { CategoryModel } from '../common/models/category.model';
+import { UuidValidationPipe } from '../common/pipes/uuid-validation.pipe';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -40,7 +40,7 @@ export class CategoryController {
 
   @Get(':id')
   @ApiOkResponse({ type: CategoryModel })
-  findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  findOne(@Param('id', UuidValidationPipe) id: string) {
     return this.categoryService.findOne(id);
   }
 
@@ -55,7 +55,7 @@ export class CategoryController {
   @ApiOkResponse({ type: CategoryModel })
   update(
     @CurrentUser() currentUser: AuthUser,
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', UuidValidationPipe) id: string,
     @Body() dto: UpdateCategoryDto,
   ) {
     this.ensureAdmin(currentUser);
@@ -67,7 +67,7 @@ export class CategoryController {
   @ApiNoContentResponse()
   async delete(
     @CurrentUser() currentUser: AuthUser,
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', UuidValidationPipe) id: string,
   ): Promise<void> {
     this.ensureAdmin(currentUser);
     await this.categoryService.delete(id);

@@ -14,6 +14,7 @@ import {
   sign,
   verify,
 } from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
 
 import { UserRole } from '../common/enums/user-role.enum';
 import { PrismaService } from '../database/prisma.service';
@@ -152,6 +153,17 @@ export class AuthService {
     }
   }
 
+  hasRequiredRole(
+    user: Pick<AuthUser, 'role'> | null | undefined,
+    allowedRoles: UserRole[],
+  ): boolean {
+    if (!user) {
+      return false;
+    }
+
+    return allowedRoles.includes(user.role);
+  }
+
   private verifyRefreshToken(token: string): RefreshPayload {
     try {
       return verify(
@@ -164,11 +176,17 @@ export class AuthService {
   }
 
   private async issueTokenPair(payload: AuthUser): Promise<TokenPair> {
-    const accessToken = sign(payload, this.getRequiredConfig('JWT_SECRET') as Secret, {
-      expiresIn: this.getRequiredConfig('JWT_ACCESS_TTL') as never,
-    });
+    const accessTokenPayload = { ...payload, tokenId: randomUUID() };
+    const refreshTokenPayload = { ...payload, tokenId: randomUUID() };
+    const accessToken = sign(
+      accessTokenPayload,
+      this.getRequiredConfig('JWT_SECRET') as Secret,
+      {
+        expiresIn: this.getRequiredConfig('JWT_ACCESS_TTL') as never,
+      },
+    );
     const refreshToken = sign(
-      payload,
+      refreshTokenPayload,
       this.getRequiredConfig('JWT_REFRESH_SECRET') as Secret,
       {
         expiresIn: this.getRequiredConfig('JWT_REFRESH_TTL') as never,

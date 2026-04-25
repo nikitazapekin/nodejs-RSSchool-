@@ -31,6 +31,15 @@ export class ArticleService {
     'updatedAt',
   ];
 
+  private static readonly validStatusTransitions: Record<
+    ArticleStatus,
+    ArticleStatus[]
+  > = {
+    [ArticleStatus.DRAFT]: [ArticleStatus.DRAFT, ArticleStatus.PUBLISHED],
+    [ArticleStatus.PUBLISHED]: [ArticleStatus.PUBLISHED, ArticleStatus.ARCHIVED],
+    [ArticleStatus.ARCHIVED]: [ArticleStatus.ARCHIVED],
+  };
+
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(
@@ -130,6 +139,7 @@ export class ArticleService {
   async update(id: string, dto: UpdateArticleDto, currentUser?: AuthUser): Promise<Article> {
     const existingArticle = await this.findRecordById(id);
     this.ensureCanManageArticle(existingArticle, currentUser);
+    this.ensureValidStatusTransition(existingArticle.status, dto.status);
 
     const authorId = this.resolveAuthorId(dto.authorId, currentUser, existingArticle.authorId);
     await this.ensureArticleRelations(authorId, dto.categoryId);
@@ -305,6 +315,21 @@ export class ArticleService {
 
     if (currentUser.role !== UserRole.EDITOR || article.authorId !== currentUser.userId) {
       throw new ForbiddenException('You are not allowed to manage this article');
+    }
+  }
+
+  private ensureValidStatusTransition(
+    currentStatus: ArticleStatus,
+    nextStatus?: ArticleStatus,
+  ): void {
+    if (!nextStatus) {
+      return;
+    }
+
+    if (!ArticleService.validStatusTransitions[currentStatus].includes(nextStatus)) {
+      throw new UnprocessableEntityException(
+        `Invalid article status transition from "${currentStatus}" to "${nextStatus}"`,
+      );
     }
   }
 }

@@ -6,7 +6,6 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -23,6 +22,7 @@ import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
 import { ListQueryDto } from '../common/dto/list-query.dto';
 import { PublicUser } from '../common/models/public-user.model';
+import { UuidValidationPipe } from '../common/pipes/uuid-validation.pipe';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
@@ -42,7 +42,7 @@ export class UserController {
   @Get(':id')
   @ApiOkResponse({ type: PublicUser })
   findOne(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', UuidValidationPipe) id: string,
   ): Promise<PublicUser> {
     return this.userService.findOne(id);
   }
@@ -61,7 +61,7 @@ export class UserController {
   @ApiOkResponse({ type: PublicUser })
   updatePassword(
     @CurrentUser() currentUser: AuthUser,
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', UuidValidationPipe) id: string,
     @Body() dto: UpdatePasswordDto,
   ): Promise<PublicUser> {
     this.ensureAdmin(currentUser);
@@ -72,7 +72,7 @@ export class UserController {
   @ApiOkResponse({ type: PublicUser })
   updateRole(
     @CurrentUser() currentUser: AuthUser,
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', UuidValidationPipe) id: string,
     @Body() dto: UpdateUserRoleDto,
   ): Promise<PublicUser> {
     this.ensureAdmin(currentUser);
@@ -84,7 +84,7 @@ export class UserController {
   @ApiNoContentResponse()
   async delete(
     @CurrentUser() currentUser: AuthUser,
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', UuidValidationPipe) id: string,
   ): Promise<void> {
     this.ensureAdmin(currentUser);
     await this.userService.delete(id);

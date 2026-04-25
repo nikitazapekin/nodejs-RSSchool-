@@ -6,7 +6,6 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -22,6 +21,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { UserRole } from '../common/enums/user-role.enum';
 import { ArticleModel } from '../common/models/article.model';
+import { UuidValidationPipe } from '../common/pipes/uuid-validation.pipe';
 import { ArticleListQueryDto } from './dto/article-list-query.dto';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -40,7 +40,7 @@ export class ArticleController {
 
   @Get(':id')
   @ApiOkResponse({ type: ArticleModel })
-  findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  findOne(@Param('id', UuidValidationPipe) id: string) {
     return this.articleService.findOne(id);
   }
 
@@ -58,7 +58,7 @@ export class ArticleController {
   @ApiOkResponse({ type: ArticleModel })
   update(
     @CurrentUser() currentUser: AuthUser,
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', UuidValidationPipe) id: string,
     @Body() dto: UpdateArticleDto,
   ) {
     if (currentUser.role === UserRole.VIEWER) {
@@ -73,7 +73,7 @@ export class ArticleController {
   @ApiNoContentResponse()
   async delete(
     @CurrentUser() currentUser: AuthUser,
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('id', UuidValidationPipe) id: string,
   ): Promise<void> {
     if (currentUser.role === UserRole.VIEWER) {
       throw new ForbiddenException('Viewer role has read-only access');

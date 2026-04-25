@@ -1,12 +1,13 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { AppController } from './app.controller';
 import { ArticleModule } from './article/article.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { CategoryModule } from './category/category.module';
+import { StripPasswordInterceptor } from './common/interceptors/strip-password.interceptor';
 import { AuthRateLimitMiddleware } from './common/middleware/auth-rate-limit.middleware';
 import { CommentModule } from './comment/comment.module';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
@@ -31,6 +32,10 @@ import { UserModule } from './user/user.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: StripPasswordInterceptor,
     },
   ],
 })

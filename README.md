@@ -48,7 +48,13 @@ This API integrates Google Gemini API for AI-powered article processing.
    AI_CACHE_TTL_SEC=300
    ```
 
-5. **Run the application:**
+5. **Prepare the database with real article data:**
+   ```bash
+   npm run prisma:migrate:deploy
+   npm run prisma:seed
+   ```
+
+6. **Run the application:**
    ```bash
    npm run start:dev
    ```
@@ -113,6 +119,15 @@ curl -X POST http://localhost:4002/ai/articles/{articleId}/analyze \
   -d '{"task": "review"}'
 ```
 
+#### Example: Generic Prompt With Session Context
+
+```bash
+curl -X POST http://localhost:4002/ai/generate \
+  -H "Authorization: Bearer {your_jwt_token}" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Summarize our previous discussion in one paragraph","sessionId":"550e8400-e29b-41d4-a716-446655440000"}'
+```
+
 ### Known Limitations
 
 - **Free-tier quotas**: Gemini free tier has rate limits (requests per minute/day)
@@ -121,6 +136,7 @@ curl -X POST http://localhost:4002/ai/articles/{articleId}/analyze \
 - **Translation quality**: Auto-detected source language may not always be accurate
 - **Response caching**: Cached responses expire after `AI_CACHE_TTL_SEC` (default 300s)
 - **Rate limiting**: Maximum `AI_RATE_LIMIT_RPM` (default 20) requests per minute per IP
+- **Short-term memory**: Generic prompt sessions are stored only in memory and are lost on restart
 
 ## Requirements
 

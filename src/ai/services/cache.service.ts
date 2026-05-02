@@ -39,4 +39,8 @@ export class CacheService {
   clear(): void {
     this.cache.clear();
   }
+
+  getEntryCount(): number {
+    return this.cache.size;
+  }
 }

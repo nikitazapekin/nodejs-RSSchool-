@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppLogger } from '../common/logger/app-logger.service';
 
@@ -60,7 +64,17 @@ export class GeminiService {
 
         if (!response.ok) {
           const errorBody = await response.text();
-          this.logger.error(`Gemini API error: ${response.status} - ${errorBody}`);
+          let parsedErrorMessage: string | undefined;
+          try {
+            const parsed = JSON.parse(errorBody) as GeminiResponse;
+            parsedErrorMessage = parsed.error?.message;
+          } catch {
+            parsedErrorMessage = undefined;
+          }
+
+          this.logger.error(
+            `Gemini API error: ${response.status}${parsedErrorMessage ? ` - ${parsedErrorMessage}` : ''}`,
+          );
 
           if (response.status === 429) {
             if (attempt < retries) {
@@ -81,6 +95,16 @@ export class GeminiService {
         const data: GeminiResponse = await response.json();
 
         if (data.error) {
+          if (data.error.code === 429 && attempt < retries) {
+            const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
+            await new Promise((resolve) => setTimeout(resolve, backoffMs));
+            continue;
+          }
+          if (data.error.code === 400 || data.error.code === 403) {
+            throw new InternalServerErrorException(
+              'Invalid Gemini API key or authentication error',
+            );
+          }
           throw new ServiceUnavailableException(`Gemini API error: ${data.error.message}`);
         }
 

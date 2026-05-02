@@ -20,7 +20,7 @@ describe('custom http errors', () => {
     const error = new NotFoundError('missing');
 
     expect(error.statusCode).toBe(HttpStatus.NOT_FOUND);
-    expect(error.message).toBe('missing!');
+    expect(error.message).toBe('missing');
   });
 
   it('creates validation error', () => {

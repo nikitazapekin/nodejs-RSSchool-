@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Param,
   Post,
-  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -16,6 +15,7 @@ import { SummarizeArticleDto, SummaryLength } from './dto/summarize-article.dto'
 import { TranslateArticleDto } from './dto/translate-article.dto';
 import { AnalyzeArticleDto, AnalysisTask } from './dto/analyze-article.dto';
 import { GenerateDto } from './dto/generate.dto';
+import { ArticleIdParamDto } from './dto/article-id-param.dto';
 
 @ApiTags('AI')
 @ApiBearerAuth()
@@ -30,10 +30,13 @@ export class AiController {
   @ApiResponse({ status: 200, description: 'Article summarized successfully' })
   @ApiResponse({ status: 404, description: 'Article not found' })
   async summarizeArticle(
-    @Param('articleId') articleId: string,
+    @Param() params: ArticleIdParamDto,
     @Body() dto: SummarizeArticleDto,
   ) {
-    return this.aiService.summarizeArticle(articleId, dto.maxLength ?? SummaryLength.MEDIUM);
+    return this.aiService.summarizeArticle(
+      params.articleId,
+      dto.maxLength ?? SummaryLength.MEDIUM,
+    );
   }
 
   @Post('articles/:articleId/translate')
@@ -43,13 +46,14 @@ export class AiController {
   @ApiResponse({ status: 400, description: 'Missing targetLanguage' })
   @ApiResponse({ status: 404, description: 'Article not found' })
   async translateArticle(
-    @Param('articleId') articleId: string,
+    @Param() params: ArticleIdParamDto,
     @Body() dto: TranslateArticleDto,
   ) {
-    if (!dto.targetLanguage) {
-      return { statusCode: 400, message: 'targetLanguage is required' };
-    }
-    return this.aiService.translateArticle(articleId, dto.targetLanguage, dto.sourceLanguage);
+    return this.aiService.translateArticle(
+      params.articleId,
+      dto.targetLanguage,
+      dto.sourceLanguage,
+    );
   }
 
   @Post('articles/:articleId/analyze')
@@ -58,10 +62,10 @@ export class AiController {
   @ApiResponse({ status: 200, description: 'Article analyzed successfully' })
   @ApiResponse({ status: 404, description: 'Article not found' })
   async analyzeArticle(
-    @Param('articleId') articleId: string,
+    @Param() params: ArticleIdParamDto,
     @Body() dto: AnalyzeArticleDto,
   ) {
-    return this.aiService.analyzeArticle(articleId, dto.task ?? AnalysisTask.REVIEW);
+    return this.aiService.analyzeArticle(params.articleId, dto.task ?? AnalysisTask.REVIEW);
   }
 
   @Post('generate')
@@ -69,7 +73,7 @@ export class AiController {
   @ApiOperation({ summary: 'Generate text from prompt' })
   @ApiResponse({ status: 200, description: 'Text generated successfully' })
   async generate(@Body() dto: GenerateDto) {
-    return this.aiService.generate(dto.prompt);
+    return this.aiService.generate(dto.prompt, dto.sessionId);
   }
 
   @Get('usage')

@@ -286,17 +286,23 @@ describe('AuthService', () => {
   });
 
   it('maps unknown access token errors to UnauthorizedException', () => {
-    const error = (service as any).mapJwtError(new Error('boom'), 'Access token is invalid');
+    const error = (service as unknown as { mapJwtError: (error: Error, message: string, isRefreshToken?: boolean) => Error })
+      .mapJwtError(new Error('boom'), 'Access token is invalid');
     expect(error).toBeInstanceOf(UnauthorizedException);
   });
 
   it('maps unknown refresh token errors to ForbiddenException', () => {
-    const error = (service as any).mapJwtError(new Error('boom'), 'Refresh token is invalid', true);
+    const error = (service as unknown as { mapJwtError: (error: Error, message: string, isRefreshToken?: boolean) => Error })
+      .mapJwtError(new Error('boom'), 'Refresh token is invalid', true);
     expect(error).toBeInstanceOf(ForbiddenException);
   });
 
   it('throws when required config is missing', () => {
-    expect(() => (service as any).getRequiredConfig('MISSING_CONFIG')).toThrow(
+    expect(() =>
+      (service as unknown as { getRequiredConfig: (key: string) => string }).getRequiredConfig(
+        'MISSING_CONFIG',
+      ),
+    ).toThrow(
       'Missing required config: MISSING_CONFIG',
     );
   });

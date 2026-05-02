@@ -29,6 +29,7 @@ export class AiRateLimitInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<{ ip: string }>();
+    const response = context.switchToHttp().getResponse<{ setHeader(name: string, value: string): void }>();
     const ip = request.ip ?? 'unknown';
     const now = Date.now();
     const windowMs = 60000;
@@ -43,6 +44,7 @@ export class AiRateLimitInterceptor implements NestInterceptor {
 
     if (log.count > this.rpm) {
       const retryAfter = Math.ceil((log.resetAt - now) / 1000);
+      response.setHeader('Retry-After', String(retryAfter));
       this.logger.warn(`AI rate limit exceeded: ${ip}, count: ${log.count}`);
       throw new HttpException(
         {

@@ -6,5 +6,9 @@ export function getTranslatePrompt(content: string, targetLanguage: string, sour
 Article content:
 ${content}
 
-Provide only the translated text without any additional commentary.`;
+Respond with valid JSON only in this format:
+{
+  "translatedText": "translated article text",
+  "detectedLanguage": "detected source language"
+}`;
 }

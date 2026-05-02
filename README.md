@@ -7,6 +7,121 @@ https://hub.docker.com/layers/nikitazapekin/rs-app/latest/images/sha256:9990acb6
 
 REST API for a Knowledge Hub platform built with Nest.js and TypeScript.
 
+## AI Integration (Gemini)
+
+This API integrates Google Gemini API for AI-powered article processing.
+
+### Gemini Model
+
+- **Model**: `gemini-2.0-flash` (configurable via `GEMINI_MODEL` env var)
+
+### How to Obtain Gemini API Key
+
+1. Go to [Google AI Studio](https://aistudio.google.com)
+2. Sign in with your Google account
+3. Click **"Create API key"** in the API keys section
+4. Select or create a Google Cloud project
+5. Copy the generated API key
+
+### Setup After Cloning
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Add your Gemini API key** to `.env`:
+   ```env
+   GEMINI_API_KEY=your-actual-api-key-here
+   ```
+
+4. **(Optional) Configure AI settings** in `.env`:
+   ```env
+   GEMINI_API_BASE_URL=https://generativelanguage.googleapis.com
+   GEMINI_MODEL=gemini-2.0-flash
+   AI_RATE_LIMIT_RPM=20
+   AI_CACHE_TTL_SEC=300
+   ```
+
+5. **Run the application:**
+   ```bash
+   npm run start:dev
+   ```
+   Or with Docker:
+   ```bash
+   ./compose-up.sh
+   ```
+
+### Testing AI Endpoints
+
+Swagger UI is available at `http://localhost:4002/doc`
+
+**Important**: All AI endpoints require Bearer token authentication.
+
+1. **Register/login** via `/auth/signup` or `/auth/login` to get JWT token
+2. **Authorize** in Swagger UI with the token
+
+#### Available AI Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/ai/articles/:articleId/summarize` | POST | Summarize an article |
+| `/ai/articles/:articleId/translate` | POST | Translate article content |
+| `/ai/articles/:articleId/analyze` | POST | Analyze article content |
+| `/ai/generate` | POST | Free-form text generation |
+| `/ai/usage` | GET | Get AI usage statistics |
+
+#### Example: Summarize Article
+
+```bash
+curl -X POST http://localhost:4002/ai/articles/{articleId}/summarize \
+  -H "Authorization: Bearer {your_jwt_token}" \
+  -H "Content-Type: application/json" \
+  -d '{"maxLength": "medium"}'
+```
+
+Response:
+```json
+{
+  "articleId": "...",
+  "summary": "...",
+  "originalLength": 1234,
+  "summaryLength": 234
+}
+```
+
+#### Example: Translate Article
+
+```bash
+curl -X POST http://localhost:4002/ai/articles/{articleId}/translate \
+  -H "Authorization: Bearer {your_jwt_token}" \
+  -H "Content-Type: application/json" \
+  -d '{"targetLanguage": "Spanish", "sourceLanguage": "English"}'
+```
+
+#### Example: Analyze Article
+
+```bash
+curl -X POST http://localhost:4002/ai/articles/{articleId}/analyze \
+  -H "Authorization: Bearer {your_jwt_token}" \
+  -H "Content-Type: application/json" \
+  -d '{"task": "review"}'
+```
+
+### Known Limitations
+
+- **Free-tier quotas**: Gemini free tier has rate limits (requests per minute/day)
+- **Latency**: AI processing can take 2-10 seconds depending on content length
+- **Regional availability**: Gemini API may not be available in all regions
+- **Translation quality**: Auto-detected source language may not always be accurate
+- **Response caching**: Cached responses expire after `AI_CACHE_TTL_SEC` (default 300s)
+- **Rate limiting**: Maximum `AI_RATE_LIMIT_RPM` (default 20) requests per minute per IP
+
 ## Requirements
 
 - Node.js `24.10.0` or newer within `24.x`
@@ -190,6 +305,43 @@ Create body:
   "content": "Useful article",
   "articleId": "00000000-0000-4000-8000-000000000000",
   "authorId": null
+}
+```
+
+### AI (requires Bearer token)
+
+- `POST /ai/articles/:articleId/summarize`
+- `POST /ai/articles/:articleId/translate`
+- `POST /ai/articles/:articleId/analyze`
+- `POST /ai/generate`
+- `GET /ai/usage`
+
+Summarize body:
+```json
+{
+  "maxLength": "short" | "medium" | "detailed"
+}
+```
+
+Translate body:
+```json
+{
+  "targetLanguage": "Spanish",
+  "sourceLanguage": "English"  // optional
+}
+```
+
+Analyze body:
+```json
+{
+  "task": "review" | "bugs" | "optimize" | "explain"
+}
+```
+
+Generate body:
+```json
+{
+  "prompt": "Your prompt here"
 }
 ```
 

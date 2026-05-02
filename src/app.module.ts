@@ -14,6 +14,7 @@ import { CommentModule } from './comment/comment.module';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { DatabaseModule } from './database/database.module';
 import { UserModule } from './user/user.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UserModule } from './user/user.module';
     ArticleModule,
     CategoryModule,
     CommentModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

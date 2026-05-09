@@ -76,3 +76,12 @@ model Tag {
 
   @@index([name])
 }
+
+model RagConversation {
+  id        String   @id
+  messages  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([updatedAt])
+}

@@ -15,6 +15,7 @@ import { RequestLoggerMiddleware } from './common/middleware/request-logger.midd
 import { DatabaseModule } from './database/database.module';
 import { UserModule } from './user/user.module';
 import { AiModule } from './ai/ai.module';
+import { RagModule } from './rag/rag.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { AiModule } from './ai/ai.module';
     CategoryModule,
     CommentModule,
     AiModule,
+    RagModule,
   ],
   controllers: [AppController],
   providers: [

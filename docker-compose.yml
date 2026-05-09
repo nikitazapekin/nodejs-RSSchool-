@@ -21,14 +21,37 @@ services:
     networks:
       - knowledge_hub_network
 
+  vectordb:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:6333/readyz >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - knowledge_hub_network
+
   app:
     build:
       context: .
     restart: on-failure
     env_file:
       - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public&connection_limit=5&pool_timeout=20
+      RAG_VECTOR_DB_URL: http://vectordb:6333
     depends_on:
       db:
+        condition: service_healthy
+      vectordb:
         condition: service_healthy
     ports:
       - "${PORT:-4000}:${PORT:-4000}"
@@ -59,3 +82,4 @@ networks:
 
 volumes:
   postgres_data:
+  qdrant_data:

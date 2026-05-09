@@ -1,401 +1,331 @@
-## Docker Hub
-
-https://hub.docker.com/layers/nikitazapekin/rs-app/latest/images/sha256:9990acb6dad5948ac8f6ca6501b3b74c7d75d4474884004b233c6ef5cc9761bd?uuid=5b61909a-eb8d-4ccd-afb0-a8bf5e576f94
-
-
 # Knowledge Hub API
 
-REST API for a Knowledge Hub platform built with Nest.js and TypeScript.
+REST API for a Knowledge Hub platform built with NestJS, TypeScript, PostgreSQL, Prisma, Google Gemini, and Qdrant.
 
-## AI Integration (Gemini)
-
-This API integrates Google Gemini API for AI-powered article processing.
-
-### Gemini Model
-
-- **Model**: `gemini-2.0-flash` (configurable via `GEMINI_MODEL` env var)
-
-### How to Obtain Gemini API Key
-
-1. Go to [Google AI Studio](https://aistudio.google.com)
-2. Sign in with your Google account
-3. Click **"Create API key"** in the API keys section
-4. Select or create a Google Cloud project
-5. Copy the generated API key
-
-### Setup After Cloning
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Configure environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
-
-3. **Add your Gemini API key** to `.env`:
-   ```env
-   GEMINI_API_KEY=your-actual-api-key-here
-   ```
-
-4. **(Optional) Configure AI settings** in `.env`:
-   ```env
-   GEMINI_API_BASE_URL=https://generativelanguage.googleapis.com
-   GEMINI_MODEL=gemini-2.0-flash
-   AI_RATE_LIMIT_RPM=20
-   AI_CACHE_TTL_SEC=300
-   ```
-
-5. **Prepare the database with real article data:**
-   ```bash
-   npm run prisma:migrate:deploy
-   npm run prisma:seed
-   ```
-
-6. **Run the application:**
-   ```bash
-   npm run start:dev
-   ```
-   Or with Docker:
-   ```bash
-   ./compose-up.sh
-   ```
-
-### Testing AI Endpoints
-
-Swagger UI is available at `http://localhost:4002/doc`
-
-**Important**: All AI endpoints require Bearer token authentication.
-
-1. **Register/login** via `/auth/signup` or `/auth/login` to get JWT token
-2. **Authorize** in Swagger UI with the token
-
-#### Available AI Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/ai/articles/:articleId/summarize` | POST | Summarize an article |
-| `/ai/articles/:articleId/translate` | POST | Translate article content |
-| `/ai/articles/:articleId/analyze` | POST | Analyze article content |
-| `/ai/generate` | POST | Free-form text generation |
-| `/ai/usage` | GET | Get AI usage statistics |
-
-#### Example: Summarize Article
-
-```bash
-curl -X POST http://localhost:4002/ai/articles/{articleId}/summarize \
-  -H "Authorization: Bearer {your_jwt_token}" \
-  -H "Content-Type: application/json" \
-  -d '{"maxLength": "medium"}'
-```
-
-Response:
-```json
-{
-  "articleId": "...",
-  "summary": "...",
-  "originalLength": 1234,
-  "summaryLength": 234
-}
-```
-
-#### Example: Translate Article
-
-```bash
-curl -X POST http://localhost:4002/ai/articles/{articleId}/translate \
-  -H "Authorization: Bearer {your_jwt_token}" \
-  -H "Content-Type: application/json" \
-  -d '{"targetLanguage": "Spanish", "sourceLanguage": "English"}'
-```
-
-#### Example: Analyze Article
-
-```bash
-curl -X POST http://localhost:4002/ai/articles/{articleId}/analyze \
-  -H "Authorization: Bearer {your_jwt_token}" \
-  -H "Content-Type: application/json" \
-  -d '{"task": "review"}'
-```
-
-#### Example: Generic Prompt With Session Context
-
-```bash
-curl -X POST http://localhost:4002/ai/generate \
-  -H "Authorization: Bearer {your_jwt_token}" \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Summarize our previous discussion in one paragraph","sessionId":"550e8400-e29b-41d4-a716-446655440000"}'
-```
-
-### Known Limitations
-
-- **Free-tier quotas**: Gemini free tier has rate limits (requests per minute/day)
-- **Latency**: AI processing can take 2-10 seconds depending on content length
-- **Regional availability**: Gemini API may not be available in all regions
-- **Translation quality**: Auto-detected source language may not always be accurate
-- **Response caching**: Cached responses expire after `AI_CACHE_TTL_SEC` (default 300s)
-- **Rate limiting**: Maximum `AI_RATE_LIMIT_RPM` (default 20) requests per minute per IP
-- **Short-term memory**: Generic prompt sessions are stored only in memory and are lost on restart
-
-## Requirements
+## Stack
 
 - Node.js `24.10.0` or newer within `24.x`
-- npm
-- Docker and Docker Compose
+- NestJS `11`
+- TypeScript `5`
+- PostgreSQL `16`
+- Prisma `7`
+- Google Gemini API
+- Qdrant vector database
 
-## Setup
+## Gemini Setup
+
+### Models used
+
+- Generation model: `gemini-2.0-flash`
+- Embedding model: `text-embedding-004`
+
+Both are configurable through environment variables:
+
+```env
+GEMINI_MODEL=gemini-2.0-flash
+GEMINI_EMBEDDING_MODEL=text-embedding-004
+```
+
+### How to obtain a Gemini API key
+
+1. Open [Google AI Studio](https://aistudio.google.com).
+2. Sign in with your Google account.
+3. Open the **API keys** page.
+4. Click **Create API key**.
+5. Select an existing Google Cloud project or create a new one.
+6. Copy the generated key.
+7. Put it into your local `.env` file as `GEMINI_API_KEY=...`.
+
+## Vector DB
+
+This project uses **Qdrant** as the external vector database.
+
+- Compose service name: `vectordb`
+- Internal URL from the app container: `http://vectordb:6333`
+- Persistent volume: `qdrant_data`
+
+Relevant env variables:
+
+```env
+RAG_VECTOR_DB_PROVIDER=qdrant
+RAG_VECTOR_DB_URL=http://vectordb:6333
+RAG_VECTOR_COLLECTION=knowledge_hub_articles
+RAG_CHUNK_SIZE=800
+RAG_CHUNK_OVERLAP=200
+RAG_CONVERSATION_MAX_MESSAGES=20
+```
+
+## Environment Setup
+
+Create a local `.env` file from the example:
+
+```bash
+cp .env.example .env
+```
+
+Required variables for this assignment:
+
+```env
+PORT=4002
+HOST=0.0.0.0
+
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=knowledge_hub
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+DATABASE_URL=postgresql://postgres:postgres@db:5432/knowledge_hub?schema=public&connection_limit=5&pool_timeout=20
+
+JWT_SECRET=your_access_token_secret
+JWT_REFRESH_SECRET=your_refresh_token_secret
+
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_API_BASE_URL=https://generativelanguage.googleapis.com
+GEMINI_MODEL=gemini-2.0-flash
+GEMINI_EMBEDDING_MODEL=text-embedding-004
+
+RAG_VECTOR_DB_PROVIDER=qdrant
+RAG_VECTOR_DB_URL=http://vectordb:6333
+RAG_VECTOR_COLLECTION=knowledge_hub_articles
+RAG_CHUNK_SIZE=800
+RAG_CHUNK_OVERLAP=200
+RAG_CONVERSATION_MAX_MESSAGES=20
+```
+
+## Full Startup Flow After Clone
+
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-Create a local `.env` from `.env.example` before running the app.
-
-## Run
-
-The service uses `.env` and listens on port `4002` by default.
+2. Create `.env`:
 
 ```bash
-npm start
+cp .env.example .env
 ```
 
-Swagger UI is available at:
+3. Put your real Gemini API key into `.env`.
+
+4. Start the full stack:
+
+```bash
+docker compose up --build
+```
+
+The Compose stack includes:
+
+- `db` for PostgreSQL
+- `vectordb` for Qdrant
+- `app` for the NestJS API
+- optional `adminer` via `docker compose --profile debug up --build`
+
+On startup, the app container runs Prisma migrations automatically before the NestJS server starts.
+
+5. Open Swagger:
 
 ```text
 http://localhost:4002/doc
 ```
 
-## Available Scripts
+6. Create a user and obtain a JWT token:
+
+- `POST /auth/signup`
+- `POST /auth/login`
+
+7. Create Knowledge Hub data:
+
+- create categories if needed
+- create articles
+- publish articles that should participate in default RAG indexing
+
+8. Build the RAG index:
 
 ```bash
-npm start
-npm run start:dev
-npm run build
-npm run lint
-npm test
-npm run prisma:generate
-npm run prisma:migrate:dev
-npm run prisma:migrate:deploy
-npm run prisma:seed
-npm run prisma:studio
+curl -X POST http://localhost:4002/ai/rag/index \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"onlyPublished":true}'
 ```
 
-## Docker
+## RAG Endpoints
 
-Start the full stack with PostgreSQL:
+All `/ai/*` endpoints require Bearer authentication.
 
-```bash
-cp .env.example .env
-./compose-up.sh
-```
+### Index Knowledge Hub data
 
-`compose-up.sh` wraps `docker compose up --build` and removes any stale `rs-db-1` container/orphans before starting the stack so the legacy `docker-compose` client does not crash on Docker releases that stopped providing the `ContainerConfig` metadata field.
-
-The Compose stack includes:
-
-- `db` on port `5432`
-- `app` on port `4002`
-- optional `adminer` on port `8080` via `docker compose --profile debug up --build`
-
-The application and PostgreSQL communicate over the custom `knowledge_hub_network` network, and PostgreSQL data is stored in the named `postgres_data` volume.
-On first PostgreSQL startup, the initial Prisma SQL migration is applied automatically through `docker-entrypoint-initdb.d`.
-
-## Prisma
-
-The API now uses PostgreSQL through Prisma ORM.
-
-Useful commands:
-
-```bash
-npm run prisma:generate
-npm run prisma:migrate:dev
-npm run prisma:seed
-```
-
-If you run the Nest app locally against the Dockerized database, set `DATABASE_URL` to use `localhost` instead of `db`, for example:
-
-```text
-postgresql://knowledge_hub:knowledge_hub@localhost:5432/knowledge_hub?schema=public&connection_limit=5&pool_timeout=20
-```
-
-## Data Model
-
-- `User`
-- `Article`
-- `Category`
-- `Comment`
-- `Tag`
-
-User passwords are never returned in API responses.
-
-## API Routes
-
-### User
-
-- `GET /user`
-- `GET /user/:id`
-- `POST /user`
-- `PUT /user/:id`
-- `DELETE /user/:id`
-
-Create body:
-
-```json
-{
-  "login": "editor01",
-  "password": "secret123",
-  "role": "editor"
-}
-```
-
-Update password body:
-
-```json
-{
-  "oldPassword": "secret123",
-  "newPassword": "newSecret456"
-}
-```
-
-### Article
-
-- `GET /article`
-- `GET /article/:id`
-- `POST /article`
-- `PUT /article/:id`
-- `DELETE /article/:id`
-
-Supported filters:
-
-- `status`
-- `categoryId`
-- `tag`
+`POST /ai/rag/index`
 
 Example:
 
-```text
-GET /article?status=published&tag=nodejs
+```bash
+curl -X POST http://localhost:4002/ai/rag/index \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "onlyPublished": true,
+    "articleIds": ["11111111-1111-4111-8111-111111111111"]
+  }'
 ```
 
-Create body:
+Example response:
 
 ```json
 {
-  "title": "Nest fundamentals",
-  "content": "Article body",
-  "status": "draft",
-  "authorId": null,
-  "categoryId": null,
-  "tags": ["nestjs", "nodejs"]
+  "indexedArticles": 1,
+  "indexedChunks": 4,
+  "vectorCollection": "knowledge_hub_articles"
 }
 ```
 
-### Category
+### Semantic search
 
-- `GET /category`
-- `GET /category/:id`
-- `POST /category`
-- `PUT /category/:id`
-- `DELETE /category/:id`
+`POST /ai/rag/search`
 
-Create body:
+Example:
+
+```bash
+curl -X POST http://localhost:4002/ai/rag/search \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "How is article moderation handled?",
+    "limit": 5,
+    "articleStatus": "published",
+    "tags": ["nestjs"]
+  }'
+```
+
+Example response:
 
 ```json
 {
-  "name": "Backend",
-  "description": "Server-side engineering content"
+  "results": [
+    {
+      "articleId": "11111111-1111-4111-8111-111111111111",
+      "articleTitle": "Moderation Workflow",
+      "chunk": "Published articles can be reviewed by editors before archival...",
+      "similarity": 0.812345
+    }
+  ]
 }
 ```
 
-### Comment
+### Chat with Knowledge Hub RAG
 
-- `GET /comment?articleId={articleId}`
-- `POST /comment`
-- `DELETE /comment/:id`
+`POST /ai/rag/chat`
 
-Create body:
+Example:
+
+```bash
+curl -X POST http://localhost:4002/ai/rag/chat \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Summarize the moderation flow and mention the main status transitions."
+  }'
+```
+
+Example follow-up in the same conversation:
+
+```bash
+curl -X POST http://localhost:4002/ai/rag/chat \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Which roles are involved?",
+    "conversationId": "<conversation-id-from-previous-response>"
+  }'
+```
+
+Example response:
 
 ```json
 {
-  "content": "Useful article",
-  "articleId": "00000000-0000-4000-8000-000000000000",
-  "authorId": null
+  "answer": "Editors can move articles from draft to published, and published articles can later be archived...",
+  "sources": [
+    {
+      "articleId": "11111111-1111-4111-8111-111111111111",
+      "articleTitle": "Moderation Workflow",
+      "relevantChunk": "Editors can publish drafts once the review is complete..."
+    }
+  ],
+  "conversationId": "6b0d2d9a-6515-4afc-9172-0a0eb4b24fdb"
 }
 ```
 
-### AI (requires Bearer token)
+### Delete one article from the vector index
 
-- `POST /ai/articles/:articleId/summarize`
-- `POST /ai/articles/:articleId/translate`
-- `POST /ai/articles/:articleId/analyze`
-- `POST /ai/generate`
-- `GET /ai/usage`
+`DELETE /ai/rag/index/articles/:articleId`
 
-Summarize body:
-```json
-{
-  "maxLength": "short" | "medium" | "detailed"
-}
+Example:
+
+```bash
+curl -X DELETE http://localhost:4002/ai/rag/index/articles/11111111-1111-4111-8111-111111111111 \
+  -H "Authorization: Bearer <jwt>"
 ```
 
-Translate body:
-```json
-{
-  "targetLanguage": "Spanish",
-  "sourceLanguage": "English"  // optional
-}
+### Inspect conversation history
+
+`GET /ai/rag/chat/:conversationId/history`
+
+Example:
+
+```bash
+curl http://localhost:4002/ai/rag/chat/<conversation-id>/history \
+  -H "Authorization: Bearer <jwt>"
 ```
 
-Analyze body:
-```json
-{
-  "task": "review" | "bugs" | "optimize" | "explain"
-}
+## RAG Flow
+
+1. Published or selected Knowledge Hub articles are loaded from PostgreSQL.
+2. Article content is split into deterministic overlapping chunks.
+3. Gemini embeddings are generated for each chunk.
+4. Chunks with metadata are stored in Qdrant.
+5. Search requests embed the query, retrieve relevant chunks, and apply metadata filters.
+6. Chat requests embed the question, retrieve relevant chunks, build a grounded prompt, and generate an answer with Gemini.
+7. Returned sources are the exact chunks passed into the grounded prompt.
+
+## Chunking
+
+Chunking is configurable by env:
+
+```env
+RAG_CHUNK_SIZE=800
+RAG_CHUNK_OVERLAP=200
 ```
 
-Generate body:
-```json
-{
-  "prompt": "Your prompt here"
-}
+The implementation is deterministic and uses stable chunk IDs based on `articleId:chunkIndex`.
+
+## Docker Notes
+
+Start everything with:
+
+```bash
+docker compose up --build
 ```
 
-## Validation and Behavior
+Qdrant data persists in the `qdrant_data` volume, PostgreSQL data persists in the `postgres_data` volume.
 
-- All request bodies are validated with DTO classes and a global validation pipe.
-- UUID route parameters are validated with Nest pipes.
-- Request logging is implemented through Nest middleware.
-- Deleting a user sets `authorId` to `null` in related articles and removes their comments.
-- Deleting a category sets `categoryId` to `null` in related articles.
-- Deleting an article removes its comments.
-- Creating a comment for a missing article returns `422 Unprocessable Entity`.
-- Article tags are persisted through a many-to-many Prisma relation.
+## Available Scripts
 
-## Pagination and Sorting
-
-List endpoints support optional pagination and sorting.
-
-Query params:
-
-- `page`
-- `limit`
-- `sortBy`
-- `order` (`asc` or `desc`)
-
-When `page` or `limit` is passed, the response format becomes:
-
-```json
-{
-  "total": 1,
-  "page": 1,
-  "limit": 10,
-  "data": []
-}
+```bash
+npm run build
+npm run start
+npm run start:dev
+npm run lint
+npm run test
+npm run prisma:generate
+npm run prisma:migrate:deploy
+npm run prisma:seed
 ```
 
-Without pagination params, list endpoints return a plain array.
+## Known Limitations
 
-## Docker Hub
-
-https://hub.docker.com/layers/nikitazapekin/rs-app/latest/images/sha256:9990acb6dad5948ac8f6ca6501b3b74c7d75d4474884004b233c6ef5cc9761bd?uuid=5b61909a-eb8d-4ccd-afb0-a8bf5e576f94
+- Gemini free tier has request and daily quota limits.
+- First full reindex can take noticeable time on larger article sets because embeddings are generated remotely.
+- Search and chat latency depends on both Gemini and Qdrant availability.
+- Gemini API availability is region-dependent.
+- Conversation memory is stored in PostgreSQL and intentionally trimmed to the last `RAG_CONVERSATION_MAX_MESSAGES` messages.
+- Retrieval quality depends on article content quality, chunk size, and how well the indexed articles cover the question.
